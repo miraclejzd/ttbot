@@ -1,0 +1,167 @@
+import random
+from loguru import logger
+from typing import Union, Dict
+
+from graia.ariadne.entry import *
+from graia.saya import Channel
+from graia.ariadne.message.parser.twilight import ParamMatch
+
+from utils import Permission, safe_send_message
+from utils.BDCloud_util import BDC
+from .filter import filtList, idList
+
+channel = Channel.current()
+
+channel.name("beautiful_pictures")
+channel.author("miraclejzd")
+channel.description("一个可以发送好看图片的插件，发送 '来张xx图片' 即可。")
+
+URL = "https://api.obfs.dev"
+pid_url = "https://pixiv.re/{}.jpg"
+
+
+@channel.use(ListenerSchema(
+    listening_events=[GroupMessage, FriendMessage, TempMessage],
+    inline_dispatchers=[
+        Twilight([
+            UnionMatch("来点", "来张"),
+            RegexMatch(r"[^\s]+", optional=True) @ "keyword",
+            UnionMatch("图片", "色图", "涩图", "瑟图"),
+        ])
+    ]
+))
+async def keyword_pictures(
+        app: Ariadne, keyword: RegexResult, source: Source,
+        event: Union[GroupMessage, FriendMessage, TempMessage]
+):
+    if not Permission(event).get(channel.module):
+        return
+
+    if not keyword.matched:
+        return await safe_send_message(app, event, await get_random_img(), quote=source)
+
+    keyword = keyword.result.display
+    res = await get_image_keyword(keyword)
+
+    spare = None
+    if res.has(Image):
+        spare = res.get(Plain)[-1]
+    await safe_send_message(app, event, res, quote=source, spare=spare)
+
+
+@channel.use(ListenerSchema(
+    listening_events=[GroupMessage, FriendMessage, TempMessage],
+    inline_dispatchers=[
+        Twilight([
+            FullMatch("/pid"),
+            FullMatch("-", optional=True),
+            ParamMatch() @ "pid"
+        ])
+    ]
+))
+async def pid_pictures(
+        app: Ariadne, pid: RegexResult, source: Source,
+        event: Union[GroupMessage, FriendMessage, TempMessage]
+):
+    if not Permission(event).get(channel.module):
+        return
+
+    pid = pid.result.display.strip()
+    res = await get_image_pid(pid)
+
+    spare = None
+    if res.has(Image):
+        spare = res.get(Plain)[-1]
+    await safe_send_message(app, event, res, quote=source, spare=spare)
+
+
+async def get_image_keyword(keyword: str) -> MessageChain:
+    return await get_image(URL + f"/api/pixiv/search?word={keyword}")
+
+
+async def get_image_pid(pid: Union[int, str]) -> MessageChain:
+    # return await get_image((URL + f"/api/pixiv/illust?id={pid}"))
+    session = Ariadne.service.client_session
+    img_url = pid_url.format(pid)
+    try:
+        async with session.get(img_url) as resp:
+            img_content = await resp.read()
+        return MessageChain([
+            Plain(text=f"你要的图片来辣！\n"),
+            Image(data_bytes=img_content),
+            Plain(text=f"\nurl:{img_url}"),
+        ])
+    except Exception as e:
+        return MessageChain(f"出现了一点错误：{str(e)}")
+
+
+
+def change_pixiv_url(url: str):
+    # available = "i.pixiv.nl"
+    # available = "proxy.pixivel.moe"
+    available = "i.pixiv.re"
+    url = (
+        url.replace("i.pximg.net", available)
+        .replace("i.pixiv.cat", available)
+        .replace("_webp", "")
+    )
+    return url
+
+
+async def get_image(url: str) -> MessageChain:
+    session = Ariadne.service.client_session
+    try:
+        async with session.get(url) as resp:
+            result: Dict = await resp.json()
+    except Exception as e:
+        logger.error(e)
+        return MessageChain(f"出现了一点错误:\n{str(e)}")
+
+    if result.get("error"):
+        return MessageChain("出现了一点错误:\n" + result["error"])
+
+    if result.get("illusts"):
+        if len(result["illusts"]) != 0:
+            data = random.choice(result["illusts"])
+        else:
+            return MessageChain(f"没有搜到相关图片呢，果咩纳塞~")
+    elif result.get("illust"):
+        data = result["illust"]
+    else:
+        return MessageChain(f"没有搜到相关图片呢，果咩纳塞~")
+
+    try:
+        img_url = data["meta_single_page"]["original_image_url"]
+    except KeyError:
+        img_url = data["meta_pages"][-1]["image_urls"]["original"]
+    img_url = change_pixiv_url(img_url)
+    info = f"title: {data['title']}\nauthor: {data['user']['name']}\nurl:{img_url}"
+    async with session.get(url=img_url) as resp:
+        img_content = await resp.read()
+
+    res = await BDC.Image_audit.get_resp({"imgUrl": img_url})
+    if isinstance(res, str):
+        return MessageChain([Plain(
+            f'图片审核API发生错误:{res}\n所以bot只发送图片链接：\n{img_url}')])
+    elif 'error_msg' in res:
+        return MessageChain([Plain(
+            f'图片审核API发生错误:{res["error_msg"]}\n所以bot只发送图片链接：\n{img_url}')])
+
+    if res["conclusionType"] == 1:
+        return MessageChain([
+            Plain(text=f"你要的图片来辣！\n"),
+            Image(data_bytes=img_content),
+            Plain(text=f"\n{info}"),
+        ])
+    else:
+        return MessageChain([Plain(
+            f'图片审核结果为: {res["conclusion"]} \n所以bot只能发送图片链接：\n{img_url}')])
+
+
+async def get_random_img() -> MessageChain:
+    id = random.choice(idList)
+    url = f'https://img.moehu.org/pic.php?id={id}'
+
+    session = Ariadne.service.client_session
+    async with session.get(url) as r:
+        return MessageChain(Image(data_bytes=await r.read()))
