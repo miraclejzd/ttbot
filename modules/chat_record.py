@@ -23,13 +23,14 @@ channel.description("聊天记录保存插件")
 @channel.use(
     ListenerSchema(
         listening_events=[GroupMessage],
-        decorators=[DetectSuffix(["入典", "添加语录"])]
+        inline_dispatchers=[Twilight(
+            ElementMatch(At, optional=True),
+            UnionMatch("入典", "添加语录")
+        )],
+        decorators=[Permission.require(channel.module, admin_special=False)]
     ),
 )
 async def add_record(app: Ariadne, group: Group, message: MessageChain, source: Source):
-    if not Permission(group).get(channel.module):
-        return
-
     if Quote not in message:
         message = message.display.strip()
         if message == "入典" or message == "添加语录":
@@ -59,13 +60,11 @@ async def add_record(app: Ariadne, group: Group, message: MessageChain, source: 
 @channel.use(
     ListenerSchema(
         listening_events=[GroupMessage],
-        inline_dispatchers=[Twilight(UnionMatch("随机语录", "抽卡"))]
+        inline_dispatchers=[Twilight(UnionMatch("随机语录", "抽卡"))],
+        decorators=[Permission.require(channel.module, admin_special=False)]
     )
 )
 async def random_record(app: Ariadne, group: Group, source: Source):
-    if not Permission(group).get(channel.module):
-        return
-
     saver = RecordSaver(group=group.id)
     back = saver.rand_doc()
 
@@ -83,18 +82,16 @@ async def random_record(app: Ariadne, group: Group, source: Source):
 @channel.use(
     ListenerSchema(
         listening_events=[GroupMessage],
-        decorators=[DetectPrefix("查询语录")]
+        decorators=[
+            DetectPrefix("查询语录"),
+            Permission.require(channel.module, admin_special=False)
+        ],
     )
 )
 async def find_record(app: Ariadne, group: Group, sender: Member, message: MessageChain, source: Source):
-    if not Permission(group).get(channel.module):
-        return
-
-    msg = message.display
-    msg = msg.strip()
+    msg = message.display.strip()
     if At in message:
-        at = message.get(At)
-        at = at[0]
+        at = message.get_first(At)
 
         if msg.find('-') != -1:
             List = msg.split('-')
@@ -149,17 +146,11 @@ async def find_record(app: Ariadne, group: Group, sender: Member, message: Messa
         inline_dispatchers=[Twilight(
             FullMatch("清空语录").space(SpacePolicy.PRESERVE),
             "force" @ FullMatch("-f", optional=True).space(SpacePolicy.PRESERVE)
-        )]
+        )],
+        decorators=[Permission.require_admin()]
     )
 )
 async def drop_collection(app: Ariadne, group: Group, sender: Member, force: MatchResult, source: Source):
-    if not Permission(group).get(channel.module):
-        return
-
-    if not Permission(sender).get():
-        await app.send_message(group, MessageChain("你还没有这个权限哦~"))
-        return
-
     if force.matched:
         saver = RecordSaver(group=group.id)
         sta, msg = saver.drop()
@@ -185,9 +176,7 @@ async def drop_collection(app: Ariadne, group: Group, sender: Member, force: Mat
 
     async def waiter(g: Group, s: Member, mess: MessageChain) -> Optional[bool]:
         if g.id == group.id and s.id == sender.id:
-            mess = mess.display
-            mess = mess.strip()
-            mess = mess.casefold()
+            mess = mess.display.strip().casefold()
             if mess == 'y':
                 return True
             elif mess == 'n':

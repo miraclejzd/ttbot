@@ -21,15 +21,13 @@ channel.description("/翻译 xxxx： 进行文本翻译")
         FullMatch("/"),
         UnionMatch("翻译", "译", "tr"),
         WildcardMatch() @ "text"
-    )]
+    )],
+    decorators=[Permission.require(channel.module)]
 ))
 async def translate(
         app: Ariadne, text: RegexResult, msg: MessageChain, source: Source,
         evt: Union[GroupMessage, TempMessage, FriendMessage]
 ):
-    if not Permission(evt).get(channel.module):
-        return
-
     if msg.has(Quote):
         quote = msg.get_first(Quote)
         try:

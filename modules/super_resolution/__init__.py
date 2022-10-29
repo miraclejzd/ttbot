@@ -44,13 +44,12 @@ processing = False
 @channel.use(ListenerSchema(
     listening_events=[GroupMessage, FriendMessage, TempMessage],
     inline_dispatchers=[Twilight(
+        ElementMatch(At, optional=True),
         FullMatch("/超分")
-    )]
+    )],
+    decorators=[Permission.require(channel.module)]
 ))
 async def super_resolution(app: Ariadne, event: events, message: MessageChain, source: Source):
-    if not Permission(event).get(channel.module):
-        return
-
     if not enable:
         return await safe_send_message(app, event, MessageChain("超分功能未开启！"), quote=source)
 

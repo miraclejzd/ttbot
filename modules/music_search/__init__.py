@@ -5,7 +5,7 @@ from graia.ariadne.entry import *
 from graia.saya import Channel
 
 from .util import handlers
-from utils.Permission import Permission
+from utils import Permission, safe_send_message
 
 channel = Channel.current()
 channel.name("music_search")
@@ -22,7 +22,7 @@ class MusicPlatform(Enum):
 
 
 @channel.use(ListenerSchema(
-    listening_events=[GroupMessage, FriendMessage],
+    listening_events=[GroupMessage, FriendMessage, TempMessage],
     inline_dispatchers=[
         Twilight([
             FullMatch("/点歌"),
@@ -30,13 +30,16 @@ class MusicPlatform(Enum):
             ArgumentMatch("-t", "-type", type=str, choices=["card", "voice", "file"], optional=True) @ "send_type",
             WildcardMatch() @ "keyword"
         ])
-    ]
+    ],
+    decorators=[Permission.require(channel.module)]
 ))
-async def music_search(app: Ariadne, event: Union[GroupMessage, FriendMessage], keyword: RegexResult,
-                       platform: ArgResult, send_type: ArgResult):
-    if not Permission(event).get(channel.module):
-        return
-
+async def music_search(
+        app: Ariadne,
+        keyword: RegexResult,
+        platform: ArgResult,
+        send_type: ArgResult,
+        event: Union[GroupMessage, FriendMessage, TempMessage]
+):
     platform = platform.result.display.strip() if platform.matched else DEFAULT_MUSIC_PLATFORM
     send_type = send_type.result if send_type.matched else DEFAULT_SEND_TYPE
     keyword = keyword.result
@@ -57,4 +60,4 @@ async def music_search(app: Ariadne, event: Union[GroupMessage, FriendMessage], 
                 name=f"{element[0]}.mp3"
             )
         else:
-            await app.send_message(event, MessageChain(element))
+            await safe_send_message(app, event, MessageChain(element))

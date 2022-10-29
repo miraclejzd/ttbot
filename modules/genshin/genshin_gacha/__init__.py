@@ -15,16 +15,14 @@ channel = Channel.current()
     inline_dispatchers=[Twilight(
         FullMatch("/"),
         RegexMatch(r"(((角色|武器|常驻)(单抽|十连)\d?)|(抽卡|十连))\s?$") @ "command"
-    )]
+    )],
+    decorators=[Permission.require(channel.module)]
 ))
 async def genshin_gacha(
         app: Ariadne, evt: Union[GroupMessage, FriendMessage, TempMessage],
         command: RegexResult,
         source: Source
 ):
-    if not Permission(evt).get(channel.module):
-        return
-
     cmd = command.result.display.strip()
     if cmd == "抽卡" or cmd == "十连":
         Fwd = Forward_generator(app.account, "ttbot", [

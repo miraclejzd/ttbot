@@ -26,7 +26,8 @@ IMAGE_PATH = Path.cwd() / "data" / "genshin" / "material"
             FullMatch("原神", optional=True),
             UnionMatch("今日", "每日"),
             FullMatch("素材")
-        )]
+        )],
+        decorators=[Permission.require(channel.module)]
     )
 )
 async def genshin_material_remind(
@@ -34,9 +35,6 @@ async def genshin_material_remind(
         evt: Union[GroupMessage, FriendMessage, TempMessage],
         source: Source
 ):
-    if not Permission(evt).get(channel.module):
-        return
-
     file_name = str((datetime.now() - timedelta(hours=4)).date())
     try:
         if not (Path(IMAGE_PATH) / f"{file_name}.png").exists():

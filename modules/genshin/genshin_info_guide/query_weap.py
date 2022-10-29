@@ -19,18 +19,15 @@ ID2name_dic = {}
 
 def load_weap_yaml():
     global weap_data
-    with WEAPON_INFO_PATH.open("r", encoding="utf-8") as infor:
-        weap_data = yaml.load(infor.read(), Loader=yaml.FullLoader)
+    if WEAPON_INFO_PATH.exists():
+        with WEAPON_INFO_PATH.open("r", encoding="utf-8") as infor:
+            weap_data = yaml.load(infor.read(), Loader=yaml.FullLoader)
     update_weap_dic()
 
 
 def save_weap_yaml():
     with WEAPON_INFO_PATH.open("w", encoding="utf-8") as infow:
         yaml.dump(weap_data, infow, allow_unicode=True, Dumper=yaml.SafeDumper)
-
-
-if not WEAPON_INFO_PATH.exists():
-    save_weap_yaml()
 
 
 # 判断是否在alias字典中，或是否为武器正名的一部分
@@ -57,6 +54,8 @@ def update_weap_dic():
 
 # 更新武器列表信息
 async def update_weap_list():
+    WEAP_PATH.mkdir(parents=True, exist_ok=True)
+
     context = await get_context(headless=False)
     page = await context.new_page()
 

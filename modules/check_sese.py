@@ -1,13 +1,7 @@
-from graia.ariadne.app import Ariadne
-from graia.ariadne.event.message import GroupMessage
-from graia.ariadne.message.chain import MessageChain
-from graia.ariadne.model import Group
-
+from graia.ariadne.entry import *
 from graia.saya import Channel
-from graia.saya.builtins.broadcast.schema import ListenerSchema
 
-from utils.Permission import Permission
-from utils.MessageChain_util import safe_send_message
+from utils import Permission, safe_send_message
 
 channel = Channel.current()
 
@@ -16,11 +10,12 @@ channel.author("miraclejzd")
 channel.description("色色检查插件")
 
 
-@channel.use(ListenerSchema(listening_events=[GroupMessage]))
+@channel.use(ListenerSchema(
+    listening_events=[GroupMessage],
+    decorators=[Permission.require(channel.module)]
+))
 async def check_sese(app: Ariadne, group: Group, message: MessageChain):
-    if not Permission(group).get(channel.module):
-        return
-    if contain_sese(str(message)):
+    if contain_sese(message.display):
         await safe_send_message(
             app,
             group,
@@ -28,13 +23,13 @@ async def check_sese(app: Ariadne, group: Group, message: MessageChain):
         )
 
 
+sese_words = [
+    "色色", "涩涩", "sese"
+]
+
+
 def contain_sese(txt):
-    if txt.find("色色") != -1:
-        return 1
-    elif txt.find("涩涩") != -1:
-        return 1
-    elif txt.find("瑟瑟") != -1:
-        return 1
-    elif txt.find("sese") != -1:
-        return 1
-    return 0
+    for word in sese_words:
+        if word in txt:
+            return True
+    return False

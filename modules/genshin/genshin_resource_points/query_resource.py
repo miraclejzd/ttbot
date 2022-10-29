@@ -38,14 +38,16 @@ MAP_RATIO = 0.5
 def load_data():
     global CENTER_POINT, resource_name_list
     if not CENTER_POINT:
-        CENTER_POINT = json.load(open(resource_label_file, "r", encoding="utf8"))[
-            "CENTER_POINT"
-        ]
-    with open(resource_type_file, "r", encoding="utf8") as f:
-        data = json.load(f)
-    for id_ in data:
-        for x in data[id_]["children"]:
-            resource_name_list.append(x["name"])
+        if resource_label_file.exists():
+            CENTER_POINT = json.load(open(resource_label_file, "r", encoding="utf8"))[
+                "CENTER_POINT"
+            ]
+    if resource_type_file.exists():
+        with open(resource_type_file, "r", encoding="utf8") as f:
+            data = json.load(f)
+        for id_ in data:
+            for x in data[id_]["children"]:
+                resource_name_list.append(x["name"])
     logger.success("加载原神资源信息成功！")
 
 
@@ -280,7 +282,6 @@ async def download_image(
 
 
 async def init(flag: bool = False):
-    global CENTER_POINT, resource_name_list
     try:
         semaphore = asyncio.Semaphore(15)
         await download_map_init(semaphore, flag)
