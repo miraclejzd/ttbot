@@ -47,7 +47,8 @@ channel.description(des[0])
             ParamMatch(optional=True) @ "option",
             ParamMatch(optional=True) @ "module"
         ])
-    ]
+    ],
+    decorators=[Permission.require_admin()]
 ))
 async def permission_control(
         app: Ariadne,
@@ -57,9 +58,6 @@ async def permission_control(
         module: RegexResult,
         source: Source
 ):
-    if not Permission(event).get():
-        return
-
     ID = ID.result.display if ID.matched else None
     module = module.result.display if module.matched else None
     option = option.result.display if option.matched else None

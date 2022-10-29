@@ -95,7 +95,7 @@ async def find_record(app: Ariadne, group: Group, sender: Member, message: Messa
 
         if msg.find('-') != -1:
             List = msg.split('-')
-            maxLen = eval(List[1]) if Permission(sender).get() else min(eval(List[1]), 5)
+            maxLen = eval(List[1]) if Permission.get_admin(sender) else min(eval(List[1]), 5)
         else:
             maxLen = 5
 
@@ -120,7 +120,7 @@ async def find_record(app: Ariadne, group: Group, sender: Member, message: Messa
         if len(List) < 3:
             records = saver.find_words(words)
         else:
-            maxLen = eval(List[2]) if Permission(sender).get() else min(eval(List[2]), 5)
+            maxLen = eval(List[2]) if Permission.get_admin(sender) else min(eval(List[2]), 5)
             records = saver.find_words(words, maxLen)
 
         msgList = []
