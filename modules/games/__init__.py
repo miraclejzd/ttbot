@@ -30,7 +30,8 @@ game_running = {}
                 RegexMatch(r"(d|dic)=\w+", optional=True) @ "dic",
                 ArgumentMatch("-help", "-h", action="store_true", optional=True) @ "get_help",
             ])
-        ]
+        ],
+        decorators=[Permission.require(channel.module)]
     )
 )
 async def game_word_guess(
@@ -41,9 +42,6 @@ async def game_word_guess(
         length: ArgResult,
         get_help: ArgResult,
 ):
-    if not Permission(ev).get(channel.module):
-        return
-
     game_id = get_game_id(ev)
     if game_id in game_running and game_running[game_id]:
         return await safe_send_message(app, ev, MessageChain("已有正在运行中的游戏实例，请等待游戏结束！"), source)
@@ -59,16 +57,14 @@ async def game_word_guess(
         FullMatch("/"),
         UnionMatch("24", "24p", "24d", "24点", "二十四点"),
         RegexMatch(r"", optional=True) @ "length",
-    )]
+    )],
+    decorators=[Permission.require(channel.module)]
 ))
 async def game_24_points(
         app: Ariadne,
         evt: Union[GroupMessage, FriendMessage, TempMessage],
         source: Source
 ):
-    if not Permission(evt).get(channel.module):
-        return
-
     game_id = get_game_id(evt)
     if game_id in game_running and game_running[game_id]:
         return await safe_send_message(app, evt, MessageChain("已有正在运行中的游戏实例，请等待游戏结束！"), source)
@@ -83,7 +79,8 @@ async def game_24_points(
     inline_dispatchers=[Twilight(
         FullMatch("/猜语音"),
         ParamMatch(optional=True) @ "lang"
-    )]
+    )],
+    decorators=[Permission.require(channel.module)]
 ))
 async def game_voice_guess(
         app: Ariadne,
@@ -91,9 +88,6 @@ async def game_voice_guess(
         lang: RegexResult,
         source: Source
 ):
-    if not Permission(evt).get(channel.module):
-        return
-
     game_id = get_game_id(evt)
     if game_id in game_running and game_running[game_id]:
         return await safe_send_message(app, evt, MessageChain("已有正在运行中的游戏实例，请等待游戏结束！"), source)

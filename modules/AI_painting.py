@@ -18,21 +18,20 @@ channel.description("AI画图插件，发送 /画图 xxx 即可")
 URL = "https://api.smoe.me/api/access"
 
 
-# @channel.use(ListenerSchema(
-#     listening_events=[GroupMessage, FriendMessage, TempMessage],
-#     inline_dispatchers=[Twilight(
-#         FullMatch("/"),
-#         UnionMatch("t2i", "画图", "绘图"),
-#         ArgumentMatch("-n", "-N", action="store_true", optional=True) @ "neg",
-#         WildcardMatch().flags(re.S) @ "tags"
-#     )]
-# ))
+@channel.use(ListenerSchema(
+    listening_events=[GroupMessage, FriendMessage, TempMessage],
+    inline_dispatchers=[Twilight(
+        FullMatch("/"),
+        UnionMatch("t2i", "画图", "绘图"),
+        ArgumentMatch("-n", "-N", action="store_true", optional=True) @ "neg",
+        WildcardMatch().flags(re.S) @ "tags"
+    )],
+    decorators=[Permission.require(channel.module)]
+))
 async def AI_painting(
         app: Ariadne, tags: RegexResult, neg: ArgResult, source: Source,
         evt: Union[GroupMessage, FriendMessage, TempMessage]
 ):
-    if not Permission(evt).get(channel.module):
-        return
     tags = tags.result.display.strip() if tags.matched else ""
     if len(tags) == 0:
         return await safe_send_message(app, evt, MessageChain("需要有一些描述词才可以开始绘画哦~"), source)

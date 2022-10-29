@@ -8,7 +8,7 @@ from graia.ariadne.entry import *
 from graia.saya import Channel
 from graia.ariadne.message.parser.twilight import ParamMatch
 
-from utils.Permission import Permission
+from utils import Permission
 
 channel = Channel.current()
 
@@ -24,12 +24,10 @@ FRAMES_PATH = Path.cwd() / "data" / "image" / "PetPetFrames"
     inline_dispatchers=[Twilight(
         UnionMatch("摸摸", "摸爆") @ "tp",
         ParamMatch() @ "tar_str",
-    )]
+    )],
+    decorators=[Permission.require(channel.module)]
 ))
 async def petpet(app: Ariadne, sender: Member, group: Group, tar_str: RegexResult, tp: RegexResult):
-    if not Permission(group).get(channel.module):
-        return
-
     ID = -1
     if tar_str.result.has(At):
         ID = tar_str.result.get_first(At).target

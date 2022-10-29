@@ -1,16 +1,10 @@
 import asyncio
 from typing import Dict, Union
 
-from graia.ariadne.app import Ariadne
-from graia.ariadne.event.message import GroupMessage
-from graia.ariadne.message.chain import MessageChain
-from graia.ariadne.event.mirai import NudgeEvent
-from graia.ariadne.model import Group, Member
-
+from graia.ariadne.entry import *
 from graia.saya import Channel
-from graia.saya.builtins.broadcast.schema import ListenerSchema
 
-from utils.Permission import Permission
+from utils import Permission
 from utils.reply_filter import filt
 
 record: Dict[str, Dict[int, Union[None, MessageChain, int]]] = {
@@ -31,13 +25,11 @@ channel.description("复读机插件")
 
 @channel.use(
     ListenerSchema(
-        listening_events=[GroupMessage]
+        listening_events=[GroupMessage],
+        decorators=[Permission.require(channel.module)]
     ),
 )
 async def repeat_message(app: Ariadne, group: Group, message: MessageChain):
-    if not Permission(group).get(channel.module):
-        return
-
     gid = group.id
     rec = record['message']
     rep = repeated['message']
@@ -61,13 +53,11 @@ async def repeat_message(app: Ariadne, group: Group, message: MessageChain):
 
 @channel.use(
     ListenerSchema(
-        listening_events=[NudgeEvent]
+        listening_events=[NudgeEvent],
+        decorators=[Permission.require(channel.module)]
     )
 )
 async def repeat_chuochuo(app: Ariadne, event: NudgeEvent):
-    if not Permission(group_id=event.group_id, friend_id=event.friend_id).get(channel.module):
-        return
-
     gid = event.group_id
     target = event.target
     if target == app.account:

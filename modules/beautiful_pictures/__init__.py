@@ -28,15 +28,13 @@ pid_url = "https://pixiv.re/{}.jpg"
             RegexMatch(r"[^\s]+", optional=True) @ "keyword",
             UnionMatch("图片", "色图", "涩图", "瑟图"),
         ])
-    ]
+    ],
+    decorators=[Permission.require(channel.module)]
 ))
 async def keyword_pictures(
         app: Ariadne, keyword: RegexResult, source: Source,
         event: Union[GroupMessage, FriendMessage, TempMessage]
 ):
-    if not Permission(event).get(channel.module):
-        return
-
     if not keyword.matched:
         return await safe_send_message(app, event, await get_random_img(), quote=source)
 
@@ -57,15 +55,13 @@ async def keyword_pictures(
             FullMatch("-", optional=True),
             ParamMatch() @ "pid"
         ])
-    ]
+    ],
+    decorators=[Permission.require(channel.module)]
 ))
 async def pid_pictures(
         app: Ariadne, pid: RegexResult, source: Source,
         event: Union[GroupMessage, FriendMessage, TempMessage]
 ):
-    if not Permission(event).get(channel.module):
-        return
-
     pid = pid.result.display.strip()
     res = await get_image_pid(pid)
 
@@ -93,7 +89,6 @@ async def get_image_pid(pid: Union[int, str]) -> MessageChain:
         ])
     except Exception as e:
         return MessageChain(f"出现了一点错误：{str(e)}")
-
 
 
 def change_pixiv_url(url: str):

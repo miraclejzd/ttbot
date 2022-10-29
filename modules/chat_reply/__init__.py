@@ -27,13 +27,11 @@ channel.description("bot智能回复")
                 "at" @ ElementMatch(At, optional=True),
                 WildcardMatch()
             ])
-        ]
-    ),
+        ],
+        decorators=[Permission.require(channel.module)]
+    )
 )
 async def chat_reply(app: Ariadne, group: Group, message: MessageChain, sender: Member, at: ElementResult):
-    if not Permission(group).get(channel.module):
-        return
-
     content = "".join(plain.text for plain in message.get(Plain)).strip().replace(" ", ", ")
     if at.matched and at.result.target == app.account:
         if content == "":

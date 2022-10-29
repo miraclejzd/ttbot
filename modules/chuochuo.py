@@ -15,11 +15,11 @@ channel.author("miraclejzd")
 channel.description("戳戳bot回复插件")
 
 
-@channel.use(ListenerSchema(listening_events=[NudgeEvent]))
+@channel.use(ListenerSchema(
+    listening_events=[NudgeEvent],
+    decorators=[Permission.require(channel.module)]
+))
 async def chuochuo(app: Ariadne, event: NudgeEvent):
-    if not Permission(group_id=event.group_id, friend_id=event.friend_id).get(channel.module):
-        return
-
     if event.context_type == "group":
         if event.target == app.account:
             await safe_send_group_message(

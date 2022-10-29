@@ -20,15 +20,13 @@ f = True
 #         listening_events=[GroupMessage],
 #         inline_dispatchers=[Twilight(
 #             FullMatch("1")
-#         )]
+#         )],
+#         decorators=[Permission.require(channel.module)]
 #     )
 # )
 async def aa_module(
         app: Ariadne, evt: GroupMessage,
 ):
-    if not Permission(evt).get():
-        return
-
     global f
     if f:
         await safe_send_message(app, evt, MessageChain("成功!"))

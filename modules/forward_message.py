@@ -1,16 +1,10 @@
 import random
 from datetime import datetime
 
-from graia.ariadne.app import Ariadne
-from graia.ariadne.event.message import GroupMessage
-from graia.ariadne.message.chain import MessageChain
-from graia.ariadne.model import Group, Member
-from graia.ariadne.message.element import Plain, Image, Forward, ForwardNode
-from graia.ariadne.message.parser.twilight import FullMatch, Twilight
+from graia.ariadne.entry import *
 from graia.saya import Channel
-from graia.saya.builtins.broadcast.schema import ListenerSchema
 
-from utils.Permission import Permission
+from utils import Permission
 
 channel = Channel.current()
 
@@ -22,13 +16,11 @@ channel.description("转发消息测试插件(无卵用)")
 @channel.use(
     ListenerSchema(
         listening_events=[GroupMessage],
-        inline_dispatchers=[Twilight(FullMatch("看看奶"))]
+        inline_dispatchers=[Twilight(FullMatch("看看奶"))],
+        decorators=[Permission.require(channel.module)]
     )
 )
 async def create_forward(app: Ariadne, group: Group, member: Member):
-    if not Permission(group).get(channel.module):
-        return
-
     fwd_nodelist = [
         ForwardNode(
             target=member,

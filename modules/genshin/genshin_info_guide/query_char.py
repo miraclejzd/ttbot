@@ -28,8 +28,9 @@ ID2name_dic = {}
 
 def load_char_yaml():
     global char_data
-    with CHARACTER_INFO_PATH.open("r", encoding="utf-8") as infor:
-        char_data = yaml.load(infor.read(), Loader=yaml.FullLoader)
+    if CHARACTER_INFO_PATH.exists():
+        with CHARACTER_INFO_PATH.open("r", encoding="utf-8") as infor:
+            char_data = yaml.load(infor.read(), Loader=yaml.FullLoader)
     update_char_dic()
 
 
@@ -41,10 +42,6 @@ def save_char_yaml():
 # 给其它模块提供查询角色信息的接口
 def get_char_data():
     return char_data
-
-
-if not CHARACTER_INFO_PATH.exists():
-    save_char_yaml()
 
 
 # 判断是否在alias字典中
@@ -67,6 +64,8 @@ def update_char_dic():
 
 # 更新角色列表信息
 async def update_char_list():
+    info_path.mkdir(parents=True, exist_ok=True)
+
     context = await get_context(headless=False)
     page = await context.new_page()
 
@@ -170,7 +169,7 @@ async def query_char_info(character_name: str) -> MessageChain:
 # 重新绘制角色攻略
 async def update_guide():
     if not guide_path.exists():
-        guide_path.mkdir()
+        guide_path.mkdir(parents=True)
     else:
         for f in guide_path.iterdir():
             if f.is_file():
@@ -178,7 +177,7 @@ async def update_guide():
 
     ori_path = guide_path.joinpath("original")
     if not ori_path.exists():
-        ori_path.mkdir()
+        ori_path.mkdir(parents=True)
     else:
         for f in ori_path.iterdir():
             if f.is_file():
