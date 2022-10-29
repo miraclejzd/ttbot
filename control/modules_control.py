@@ -42,7 +42,8 @@ channel.description("".join(txt for txt in des))
             ParamMatch(optional=True) @ "module",
             ArgumentMatch("-f", action="store_true", optional=True) @ "force"
         ])
-    ]
+    ],
+    decorators=[Permission.require_admin()]
 ))
 async def modules_manager(
         app: Ariadne,
@@ -51,9 +52,6 @@ async def modules_manager(
         force: ArgResult,
         event: Union[GroupMessage, FriendMessage]
 ):
-    if not Permission(event).get():
-        return
-
     option = option.result.display if option.matched else None
     module = module.result.display if module.matched else None
     force = force.matched
@@ -221,7 +219,7 @@ async def management(
                     return f"名称错误，或该插件已被加载，请检查一下重新发送！"
 
         async def waiter(event: Union[GroupMessage, FriendMessage], mess: MessageChain) -> Optional[bool]:
-            if Permission(event).get():
+            if Permission.get_admin(event):
                 q_list = mess.get(Quote)
                 if q_list and q_list[0].id != quote_message.messageId:
                     return None
@@ -292,7 +290,7 @@ async def management(
         tar_load = "重载" if option == "reload" else "卸载"
 
         async def waiter(event: Union[GroupMessage, FriendMessage], mess: MessageChain) -> Optional[bool]:
-            if Permission(event).get():
+            if Permission.get_admin(event):
                 q_list = mess.get(Quote)
                 if q_list and q_list[0].id != quote_message.messageId:
                     return None

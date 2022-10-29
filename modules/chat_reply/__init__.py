@@ -5,7 +5,6 @@ from graia.ariadne.entry import *
 from graia.saya import Channel
 from graia.ariadne.message.parser.twilight import ElementMatch, ElementResult, WildcardMatch
 
-
 from .words import AdminWords, MemberWords
 from utils.Permission import Permission
 from utils.reply_filter import filt
@@ -28,7 +27,7 @@ channel.description("bot智能回复")
                 WildcardMatch()
             ])
         ],
-        decorators=[Permission.require(channel.module)]
+        decorators=[Permission.require(channel.module, admin_special=False)]
     )
 )
 async def chat_reply(app: Ariadne, group: Group, message: MessageChain, sender: Member, at: ElementResult):
@@ -63,7 +62,7 @@ async def chat_reply(app: Ariadne, group: Group, message: MessageChain, sender: 
 
 
 async def exec_empty_content(app: Ariadne, group: Group, sender: Member):
-    if Permission(sender).get():
+    if Permission.get_admin(sender):
         txt = AdminWords[random.randint(0, len(AdminWords) - 1)]
     else:
         txt = MemberWords[random.randint(0, len(MemberWords) - 1)]
