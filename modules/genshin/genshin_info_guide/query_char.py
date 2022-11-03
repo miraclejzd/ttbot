@@ -16,8 +16,10 @@ CHAR_PATH = Path.cwd() / "data" / "genshin" / "characters"
 CHARACTER_INFO_PATH = Path.cwd() / "data" / "genshin" / "character_info.yaml"
 guide_path = CHAR_PATH / "guide"
 info_path = CHAR_PATH / "info"
+
 char_url = "https://bbs.mihoyo.com/ys/obc/channel/map/189/25?bbs_presentation_style=no_header"
 info_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?gids=2&order_type=2&collection_id=428421"
+xiaoyao_info_url = "https://gitee.com/Ctrlcvs/xiaoyao-plus/raw/main/juese_tujian/{}.png"
 guide_ori_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?gids=2&order_type=1&collection_id=642956"
 guide_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?&gids=2&order_type=2&collection_id=1180811"
 
@@ -142,20 +144,29 @@ async def query_char_info(character_name: str) -> MessageChain:
     else:  # 不存在则从API获取更新并缓存
         character_name = ID2name_dic[alias_dic[character_name]]
 
-        session = Ariadne.service.client_session
-        async with session.get(info_url) as resp:
-            resp = await resp.json()
-
-        if not resp or resp["retcode"] != 0:
-            logger.error(resp)
-            raise ValueError(resp["message"])
-
-        special = ['雷电将军', '珊瑚宫心海', '菲谢尔', '托马', '八重神子', '九条裟罗', '辛焱', '神里绫华']
         img_url = None
-        for val in resp["data"]["posts"]:
-            if character_name in val["post"]["subject"]:
-                img_url = val["image_list"][1]["url"] if character_name not in special else val["image_list"][2]["url"]
-                break
+        session = Ariadne.service.client_session
+
+        # 逍遥角色图鉴
+        if "旅行者·" in character_name:
+            character_name = character_name[-1] + "主"
+        async with session.get(xiaoyao_info_url.format(character_name)) as resp:
+            if resp.status == 200:
+                img_url = xiaoyao_info_url.format(character_name)
+
+        # # 米游社API
+        # async with session.get(info_url) as resp:
+        #     resp = await resp.json()
+        #     if not resp or resp["retcode"] != 0:
+        #         logger.error(resp)
+        #         raise ValueError(resp["message"])
+        #
+        # special = ['雷电将军', '珊瑚宫心海', '菲谢尔', '托马', '八重神子', '九条裟罗', '辛焱', '神里绫华']
+        # for val in resp["data"]["posts"]:
+        #     if character_name in val["post"]["subject"]:
+        #         img_url = val["image_list"][1]["url"] if character_name not in special else val["image_list"][2]["url"]
+        #         break
+
         if img_url:
             async with session.get(img_url) as img_resp:
                 bytes_img = await img_resp.read()
