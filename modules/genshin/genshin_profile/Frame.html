@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="shortcut icon" href="#"/>
+    <link rel="preload" href="statics/font/HYWH-65W.woff" as="font" type="font/woff">
+    <link rel="preload" href="statics/font/NZBZ.woff" as="font" type="font/woff">
+    <link rel="preload" href="statics/font/tttgbnumber.woff" as="font" type="font/woff">
+    <link rel="stylesheet" type="text/css" href="common.css"/>
+    <title>Genshin-Profile</title>
+    {% block css %}
+    {% endblock %}
+  </head>
+  <body class="elem-{{char.element or 'hydro'}} {{displayMode or mode or 'default'}}-mode {{bodyClass}}" style=transform:scale(1.5)>
+    <div class="container elem-bg" id="container">
+      {% block main %}
+      {% endblock %}
+      <div class="copyright">by ttBot.</div>
+    </div>
+  </body>
+</html>

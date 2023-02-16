@@ -81,12 +81,17 @@ async def get_image_pid(pid: Union[int, str]) -> MessageChain:
     img_url = pid_url.format(pid)
     try:
         async with session.get(img_url) as resp:
-            img_content = await resp.read()
-        return MessageChain([
-            Plain(text=f"你要的图片来辣！\n"),
-            Image(data_bytes=img_content),
-            Plain(text=f"\nurl:{img_url}"),
-        ])
+            if resp.status == 200:
+                img_content = await resp.read()
+                return MessageChain([
+                    Plain(text=f"你要的图片来辣！\n"),
+                    Image(data_bytes=img_content),
+                    Plain(text=f"\nurl:{img_url}"),
+                ])
+            else:
+                return MessageChain([
+                    Plain("连接失败，请检查是不是pid有误。")
+                ])
     except Exception as e:
         return MessageChain(f"出现了一点错误：{str(e)}")
 
