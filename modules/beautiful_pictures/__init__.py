@@ -88,6 +88,11 @@ async def get_image_pid(pid: Union[int, str]) -> MessageChain:
                     Image(data_bytes=img_content),
                     Plain(text=f"\nurl:{img_url}"),
                 ])
+            elif resp.status == 503:
+                return MessageChain([
+                    Plain("API限速，访问频率过高，请等一等再试哦。"),
+                    Plain(text=f"\nurl:{img_url}")
+                ])
             else:
                 return MessageChain([
                     Plain("连接失败，请检查是不是pid有误。")
@@ -97,14 +102,19 @@ async def get_image_pid(pid: Union[int, str]) -> MessageChain:
 
 
 def change_pixiv_url(url: str):
-    # available = "i.pixiv.nl"
-    # available = "proxy.pixivel.moe"
-    available = "i.pixiv.re"
-    url = (
-        url.replace("i.pximg.net", available)
-        .replace("i.pixiv.cat", available)
-        .replace("_webp", "")
+    # available = "i.pixiv.re"
+    available = "pixiv.re"
+    url = "https://" + available + "/" + (
+        url.split('/')[-1]
+        .replace("_p0", "")
+        .replace("_p", "-")
+        .replace(".png", ".jpg")
     )
+    # url = (
+    #     url.replace("i.pximg.net", available)
+    #         .replace("i.pixiv.cat", available)
+    #         .replace("_webp", "")
+    # )
     return url
 
 
@@ -118,7 +128,7 @@ async def get_image(url: str) -> MessageChain:
         return MessageChain(f"出现了一点错误:\n{str(e)}")
 
     if result.get("error"):
-        return MessageChain("出现了一点错误:\n" + result["error"])
+        return MessageChain("出现了一点错误:\n" + result["error"]["message"])
 
     if result.get("illusts"):
         if len(result["illusts"]) != 0:
@@ -137,25 +147,22 @@ async def get_image(url: str) -> MessageChain:
     img_url = change_pixiv_url(img_url)
     info = f"title: {data['title']}\nauthor: {data['user']['name']}\nurl:{img_url}"
     async with session.get(url=img_url) as resp:
-        img_content = await resp.read()
-
-    res = await BDC.Image_audit.get_resp({"imgUrl": img_url})
-    if isinstance(res, str):
-        return MessageChain([Plain(
-            f'图片审核API发生错误:{res}\n所以bot只发送图片链接：\n{img_url}')])
-    elif 'error_msg' in res:
-        return MessageChain([Plain(
-            f'图片审核API发生错误:{res["error_msg"]}\n所以bot只发送图片链接：\n{img_url}')])
-
-    if res["conclusionType"] == 1:
-        return MessageChain([
-            Plain(text=f"你要的图片来辣！\n"),
-            Image(data_bytes=img_content),
-            Plain(text=f"\n{info}"),
-        ])
-    else:
-        return MessageChain([Plain(
-            f'图片审核结果为: {res["conclusion"]} \n所以bot只能发送图片链接：\n{img_url}')])
+        if resp.status == 200:
+            img_content = await resp.read()
+            return MessageChain([
+                Plain(text=f"你要的图片来辣！\n"),
+                Image(data_bytes=img_content),
+                Plain(text=f"\n{info}"),
+            ])
+        elif resp.status == 503:
+            return MessageChain([
+                Plain("API限速，访问频率过高，请等一等再试哦。"),
+                Plain(text=f"\n{info}")
+            ])
+        else:
+            return MessageChain([
+                Plain("连接失败，请检查是不是pid有误。")
+            ])
 
 
 async def get_random_img() -> MessageChain:

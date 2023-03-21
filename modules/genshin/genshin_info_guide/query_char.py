@@ -22,7 +22,8 @@ char_url = "https://bbs.mihoyo.com/ys/obc/channel/map/189/25?bbs_presentation_st
 info_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?gids=2&order_type=2&collection_id=428421"
 xiaoyao_info_url = "https://gitee.com/api/v5/repos/Ctrlcvs/xiaoyao-plus/contents/juese_tujian/{}.png"
 guide_ori_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?gids=2&order_type=1&collection_id=642956"
-guide_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?&gids=2&order_type=2&collection_id=1180811"
+guide_url = "https://bbs-api.mihoyo.com/post/wapi/getPostFullInCollection?&gids=2&order_type=2&collection_id="
+collection_ids = [1180811, 839181, 839179, 839176]
 
 char_data = {}
 alias_dic = {}
@@ -49,7 +50,7 @@ def get_char_data():
 
 # 给其他模块提供查询角色全名的接口
 def get_char_name(alias: str) -> Optional[str]:
-    if alias in ID2name_dic:
+    if alias in alias_dic:
         return ID2name_dic[alias_dic[alias]]
     else:
         return None
@@ -116,23 +117,29 @@ async def query_char_guide(character_name: str) -> MessageChain:
         if "旅行者·" in character_name:
             character_name = character_name[-1] + "主"
 
-        session = Ariadne.service.client_session
-        async with session.get(guide_url) as resp:
-            resp = await resp.json()
-
-        if not resp or resp["retcode"] != 0:
-            logger.error(resp)
-            raise ValueError(resp["message"])
-
         img_url = None
-        for val in resp["data"]["posts"]:
-            if character_name in val["post"]["subject"]:
-                MAX = 0
-                for i, v in enumerate(val["image_list"]):
-                    if int(v["size"]) >= int(val["image_list"][MAX]["size"]):
-                        MAX = i
-                img_url = val["image_list"][MAX]["url"]
+        session = Ariadne.service.client_session
+        for coll_id in collection_ids:
+            async with session.get(guide_url+str(coll_id)) as resp:
+                resp = await resp.json()
+
+            if not resp or resp["retcode"] != 0:
+                logger.error(resp)
+                raise ValueError(resp["message"])
+
+            find = False
+            for val in resp["data"]["posts"]:
+                if character_name in val["post"]["subject"]:
+                    MAX = 0
+                    for i, v in enumerate(val["image_list"]):
+                        if int(v["size"]) >= int(val["image_list"][MAX]["size"]):
+                            MAX = i
+                    img_url = val["image_list"][MAX]["url"]
+                    find = True
+                    break
+            if find:
                 break
+
         if img_url:
             async with session.get(img_url) as img_resp:
                 bytes_img = await img_resp.read()

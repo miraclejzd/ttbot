@@ -24,7 +24,7 @@ async def genshin_gacha(
         source: Source
 ):
     cmd = command.result.display.strip()
-    if cmd == "抽卡" or cmd == "十连":
+    if cmd == "十连":
         Fwd = Forward_generator(app.account, "ttbot", [
             "/角色单抽  对第一个UP池进行单抽",
             "/角色十连 对第一个UP池进行十连抽卡",

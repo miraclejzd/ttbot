@@ -1,4 +1,5 @@
 import yaml
+import base64
 import aiohttp
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from utils import get_context, TextEngine, GraiaAdapter
 WEAP_PATH = Path.cwd() / "data" / "genshin" / "weapons"
 WEAPON_INFO_PATH = Path.cwd() / "data" / "genshin" / "weapon_info.yaml"
 mys_weap_url = "https://bbs.mihoyo.com/ys/obc/channel/map/189/5?bbs_presentation_style=no_header"
-paimon_weap_url = "https://static.cherishmoon.fun/LittlePaimon/WeaponMaps/{}.jpg"
+Nwflower_weap_url = "https://gitee.com/api/v5/repos/Nwflower/genshin-atlas/contents/weapon/"
 
 weap_data = {}
 alias_dic = {}
@@ -88,7 +89,7 @@ def get_weap_list() -> MessageChain:
     ))
 
 
-# 查询角色信息
+# 查询武器信息
 async def query_weap_info(weapon_name: str) -> MessageChain:
     if weapon_name not in alias_dic:
         return MessageChain("查询不到该角色的攻略哦~\n可发送 '原神角色列表' 查询所有角色姓名")
@@ -97,10 +98,16 @@ async def query_weap_info(weapon_name: str) -> MessageChain:
         return MessageChain(Image(path=img_path))
     else:  # 不存在则网上更新并缓存
         weapon_name = ID2name_dic[alias_dic[weapon_name]]
-
+        data_bytes = None
         async with aiohttp.ClientSession() as session:
-            async with session.get(paimon_weap_url.format(weapon_name)) as resp:
-                data_bytes = await resp.read()
+            for weap_type in ["单手剑", "双手剑", "弓", "法器", "长柄武器"]:
+                weap_url = Nwflower_weap_url + weap_type + "/{}.png".format(weapon_name)
+                async with session.get(weap_url, verify_ssl=False) as resp:
+                    resp = await resp.json()
+                    if "content" in resp:
+                        b64_str = resp["content"]
+                        data_bytes = base64.b64decode(b64_str)
+                        break
 
         # context = await get_context(headless=False)
         #
@@ -112,7 +119,9 @@ async def query_weap_info(weapon_name: str) -> MessageChain:
         #     bytes_whole = await page1.locator(".obc-tmpl > div:nth-child(3)").screenshot()
         #     await context.close()
 
-        with open(img_path, "wb") as f:
-            f.write(data_bytes)
-
-        return MessageChain(Image(path=img_path))
+        if data_bytes:
+            with open(img_path, "wb") as f:
+                f.write(data_bytes)
+            return MessageChain(Image(path=img_path))
+        else:
+            return MessageChain("API查询不到该角色的信息哦~\n 可能要等up主来更新信息啦。")

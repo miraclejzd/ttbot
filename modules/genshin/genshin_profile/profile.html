@@ -18,7 +18,7 @@
             <div class="talent-item">
                 <div class="talent-icon
                     {% if talent['plus'] %}talent-plus{%endif%}
-                    {% if talent['level'] == 10 or talent['level'] == 13 %}talent-crown{%endif%}">
+                    {% if talent['crown'] %}talent-crown{%endif%}">
                     <div class="talent-icon-img"
                          style="background-image:url('./statics/character/{{char.name}}/icons/talent-{{key}}.webp')"></div>
                     <span>{{talent['level']}}</span>

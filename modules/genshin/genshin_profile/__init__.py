@@ -1,3 +1,4 @@
+import asyncio
 from typing import Union
 from pathlib import Path
 from datetime import datetime
@@ -52,13 +53,18 @@ async def get_profile(uid: int, tar_char: str) -> MessageChain:
             data = await client.fetch_user(uid)
         except EnkaPlayerNotFound:
             return MessageChain("没找到这个玩家，请检查UID是否有误！")
+        except asyncio.TimeoutError:
+            return MessageChain(f"连接超时，可能Enka网络正在维护服务器（大概需要5~8h）")
+        except Exception as e:
+            return MessageChain(f"出现错误：{str(e)}")
 
         if data.characters is None:
             return MessageChain("角色展示关闭了！请将角色展示打开并稍等1-2min再进行查询哦。")
 
         filter_list = list(filter(lambda char: char.name == char_name, data.characters))
         if len(filter_list) == 0:
-            return MessageChain(f"角色展柜里没有 {tar_char} 这个角色哦，请将ta放进展柜并稍等1-2min再进行查询。")
+            exist_char: str = "、".join(c.name for c in data.characters)
+            return MessageChain(f"角色展柜里没有 {tar_char} 这个角色哦!\n当前展柜里的角色为：{exist_char}")
 
         char = Character(filter_list[0])
         env = Environment(loader=FileSystemLoader(cwd_path))

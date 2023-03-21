@@ -50,9 +50,16 @@ class Character:
         self.talent = {}
         talentMap = ['a', 'e', 'q']
         for idx, skill in enumerate(charInfo.skills):
+            crown: bool = False
+            if self.name == "达达利亚" and idx == 0 and skill.level >= 11:
+                crown = True
+            else:
+                crown = skill.level >= 13 if skill.is_boosted else skill.level >= 10
+
             self.talent[talentMap[idx]] = {
                 'level': skill.level,
-                'plus': skill.is_boosted
+                'plus': skill.is_boosted,
+                "crown": crown
             }
 
         stats = charInfo.stats
