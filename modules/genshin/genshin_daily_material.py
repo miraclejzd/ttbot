@@ -3,9 +3,9 @@ import time
 from math import ceil
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 from loguru import logger
 from PIL import Image as IMG
+from typing import Union
 from datetime import datetime, timedelta
 
 from graia.ariadne.entry import *
@@ -82,10 +82,17 @@ async def update_image():
     async with session.get(url) as resp:
         resp = await resp.json()
     sort_day = time.strftime("%w")
-    day = str(int(sort_day) + 7) if sort_day == "0" else sort_day
+    day = "7" if sort_day == "0" else sort_day
     for v in resp["data"]["list"]:
         if day in v["drop_day"]:
-            v["sort"] = ast.literal_eval(v["sort"])
+            if v["sort"]:
+                v["sort"] = ast.literal_eval(v["sort"])
+            else:
+                print(v["title"])
+                v["sort"] = {}
+                for key in v["drop_day"]:
+                    v["sort"]["0" if key == "7" else key] = 100
+                print(f"{v['title']} ok!")
             char_list.append(v) if v["break_type"] == "2" else weap_list.append(v)
     char_list.sort(key=lambda x: x["sort"][sort_day])
     weap_list.sort(key=lambda x: x["sort"][sort_day])

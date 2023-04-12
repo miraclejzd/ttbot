@@ -8,7 +8,7 @@ from graia.ariadne.entry import *
 from graia.saya import Channel
 from graia.ariadne.message.parser.twilight import ParamMatch
 
-from utils import Permission
+from utils import Permission, safe_send_message
 
 channel = Channel.current()
 
@@ -27,7 +27,10 @@ FRAMES_PATH = Path.cwd() / "data" / "image" / "PetPetFrames"
     )],
     decorators=[Permission.require(channel.module)]
 ))
-async def petpet(app: Ariadne, sender: Member, group: Group, tar_str: RegexResult, tp: RegexResult):
+async def petpet(
+        app: Ariadne, sender: Member, group: Group, tar_str: RegexResult, tp: RegexResult,
+        source: Source
+):
     ID = -1
     if tar_str.result.has(At):
         ID = tar_str.result.get_first(At).target
@@ -48,7 +51,10 @@ async def petpet(app: Ariadne, sender: Member, group: Group, tar_str: RegexResul
         await app.send_message(group, MessageChain("我不知道你要摸谁~"))
     else:
         duration = 90 if tp.result.display == "摸摸" else 50
-        await app.send_message(group, MessageChain(Image(data_bytes=await make_gif(ID, duration))))
+        await safe_send_message(
+            app, group, MessageChain(Image(data_bytes=await make_gif(ID, duration))),quote=source,
+            spare=Plain("图片被QQ吞啦，可能是头像迷惑性太强，被认为是H图.")
+        )
 
 
 frame_spec = [

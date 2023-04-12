@@ -179,7 +179,7 @@ async def word_guess(
         app, ev,
         MessageChain(
             [
-                Image(data_bytes=wg_instance.get_board_bytes()),
+                Image(data_bytes=wg_instance.draw_hint()),
                 Plain(
                     f"\n你有{wg_instance.row}次机会猜出单词，单词长度为{wg_instance.length}，请发送单词"
                 ),

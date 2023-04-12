@@ -71,6 +71,7 @@ async def safe_send_message(
                 await asyncio.sleep(min(recall, 120))
                 await app.recall_message(msgID)
         else:
+            logger.warning(f"原消息没有发出去: {message.display} ")
             if spare:
                 return await app.send_message(target, MessageChain(spare), quote=quote)
         return msgID
@@ -123,6 +124,7 @@ async def safe_send_group_message(
                 await asyncio.sleep(min(recall, 120))
                 await app.recall_message(msgID)
         else:
+            logger.warning(f"原消息没有发出去: {message.display} ")
             if spare:
                 return await app.send_group_message(target, MessageChain(spare), quote=quote)
         return msgID

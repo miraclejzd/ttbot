@@ -16,8 +16,8 @@ from graia.ariadne.message.element import Image, Plain
 from .map import Map
 from utils.image_util import BuildImage
 
-LABEL_URL = "https://api-static.mihoyo.com/common/blackboard/ys_obc/v1/map/label/tree?app_sn=ys_obc"
-POINT_LIST_URL = "https://api-static.mihoyo.com/common/blackboard/ys_obc/v1/map/point/list?map_id=2&app_sn=ys_obc"
+LABEL_URL = "https://api-static.mihoyo.com/common/map_user/ys_obc/v1/map/label/tree?map_id=2&app_sn=ys_obc"
+POINT_LIST_URL = "https://api-static.mihoyo.com/common/map_user/ys_obc/v1/map/point/list?map_id=2&app_sn=ys_obc"
 MAP_URL = "https://api-static.mihoyo.com/common/map_user/ys_obc/v1/map/info?map_id=2&app_sn=ys_obc&lang=zh-cn"
 
 IMAGE_PATH = TEXT_PATH = Path.cwd() / "data"
@@ -101,7 +101,7 @@ def get_resource_type_list():
     mes = "当前资源列表如下：\n"
 
     for resource_type in temp.keys():
-        mes += f"{resource_type}：{'，'.join(temp[resource_type])}\n"
+        mes += f"{resource_type}：{'，'.join(temp[resource_type])}\n\n\n"
     return mes
 
 

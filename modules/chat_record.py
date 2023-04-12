@@ -88,14 +88,14 @@ async def random_record(app: Ariadne, group: Group, source: Source):
         ],
     )
 )
-async def find_record(app: Ariadne, group: Group, sender: Member, message: MessageChain, source: Source):
+async def find_record(app: Ariadne, group: Group, message: MessageChain, source: Source):
     msg = message.display.strip()
     if At in message:
         at = message.get_first(At)
 
         if msg.find('-') != -1:
             List = msg.split('-')
-            maxLen = eval(List[1]) if Permission.get_admin(sender) else min(eval(List[1]), 5)
+            maxLen = eval(List[1])
         else:
             maxLen = 5
 
@@ -104,10 +104,12 @@ async def find_record(app: Ariadne, group: Group, sender: Member, message: Messa
 
         msgList = []
         if len(backList) != 0:
-            msgList.append(sender.name + ":\n")
+            member: Member = await app.get_member(group, at.target)
+            msgList.append(member.name + ":\n")
             for i in range(0, len(backList)):
                 msgList.extend(saver.to_MessageChain(backList[i]))
                 msgList.append("\n")
+            msgList.append("...")
         else:
             msgList.append("ta还没有入典语录哦")
 
@@ -120,7 +122,7 @@ async def find_record(app: Ariadne, group: Group, sender: Member, message: Messa
         if len(List) < 3:
             records = saver.find_words(words)
         else:
-            maxLen = eval(List[2]) if Permission.get_admin(sender) else min(eval(List[2]), 5)
+            maxLen = eval(List[2])
             records = saver.find_words(words, maxLen)
 
         msgList = []
